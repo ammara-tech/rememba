@@ -72,7 +72,7 @@ export default function LoginScreen() {
         </p>
       </aside>
 
-      <section className="flex flex-col px-5 py-6 sm:px-10">
+      <main className="flex flex-col px-5 py-6 sm:px-10">
         <div className="flex items-center justify-between">
           <p className="flex items-center gap-2 font-serif text-xl font-bold lg:invisible">
             <Logo />
@@ -160,7 +160,7 @@ export default function LoginScreen() {
           </p>
           <p className="mt-6 text-sm text-ink-soft">Only you can see your cards. They&apos;re stored in your own private space in Google&apos;s Firebase database.</p>
         </div>
-      </section>
+      </main>
     </div>
   );
 }
@@ -212,7 +212,7 @@ function DemoList() {
           ).map(([label, gap, colour]) => (
             <span key={label} className="rounded-lg py-1.5" style={{ background: colour }}>
               {label}
-              <span className="block text-[10px] font-semibold opacity-85">{gap}</span>
+              <span className="block text-[10px] font-semibold">{gap}</span>
             </span>
           ))}
         </div>
@@ -220,7 +220,7 @@ function DemoList() {
 
       {/* The streak, below the question card without touching it */}
       <div className={`${card} absolute left-[4%] top-[262px] w-[230px] rotate-[-2deg]`}>
-        <p className="flex items-center gap-2 whitespace-nowrap font-serif text-xl font-bold text-[#e8781d]">
+        <p className="flex items-center gap-2 whitespace-nowrap font-serif text-xl font-bold text-[#a8540d]">
           <Icon name="flame" className="h-6 w-6" />
           12-day streak
         </p>

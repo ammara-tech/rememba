@@ -42,6 +42,7 @@ Built with Next.js, TypeScript, Tailwind CSS and Firebase (Authentication and Cl
 - **Works offline and installs like an app.** Study on the taxi or train; your answers sync when you're back
   online.
 - **Sign in** with email and password (with a reset email) or Google. If the browser blocks Google's pop-up window, the whole page goes to Google instead. Sign-in errors say what went wrong in plain words, with Firebase's error code underneath. Light and dark themes.
+- **Fast first load:** a new visitor gets the sign-in screen straight from the server, without waiting for Firebase to load. Someone who has signed in on the device before sees the loading screen instead while Firebase checks (a small hint saved on the device decides which).
 
 ## Plans
 Rememba is free for students. If it grows, this is how it could pay for itself:
