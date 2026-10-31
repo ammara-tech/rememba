@@ -160,7 +160,7 @@ export default function LoginScreen() {
   Each shows something Rememba does:
     back:   a question card (Afrikaans: "How are you?")
     middle: the answer, with the four grade buttons and how long until you'd see it again
-    front:  your streak and the last week of studying
+    below:  your streak and the last week of studying
   Decorative only: screen readers skip it.
 */
 const card = "rounded-2xl bg-[#fffdf7] p-5 text-[#1b1e33] shadow-[0_24px_50px_-18px_rgba(0,0,0,0.6)]";
@@ -174,7 +174,7 @@ const ruled = {
 
 function DemoList() {
   return (
-    <div aria-hidden="true" className="relative mx-auto mt-8 h-[400px] w-full max-w-[520px] select-none">
+    <div aria-hidden="true" className="relative mx-auto mt-8 h-[430px] w-full max-w-[520px] select-none">
       {/* The question */}
       <div className={`${card} absolute left-0 top-2 w-[250px] rotate-[-6deg]`} style={ruled}>
         <p className="flex items-center justify-between text-[11px] font-bold uppercase tracking-widest text-[#565b78]">
@@ -206,8 +206,8 @@ function DemoList() {
         </div>
       </div>
 
-      {/* The streak */}
-      <div className={`${card} absolute bottom-0 left-[8%] w-[240px] rotate-[-2deg]`}>
+      {/* The streak, below the question card without touching it */}
+      <div className={`${card} absolute left-[4%] top-[252px] w-[240px] rotate-[-2deg]`}>
         <p className="flex items-center gap-2 whitespace-nowrap font-serif text-xl font-bold text-[#e8781d]">
           <Icon name="flame" className="h-6 w-6" />
           12-day streak

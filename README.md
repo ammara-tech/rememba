@@ -4,7 +4,7 @@
 repetition), so a few minutes a day is enough to remember what you study. Keep a streak, watch your
 progress, and study with no signal.
 
-**Live site:** _add your Vercel link here once it's deployed_
+**Live site:** [rememba-one.vercel.app](https://rememba-one.vercel.app)
 
 Built with Next.js, TypeScript, Tailwind CSS and Firebase (Authentication and Cloud Firestore).
 
