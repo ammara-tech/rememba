@@ -156,7 +156,7 @@ export default function LoginScreen() {
 }
 
 /*
-  Three made-up index cards overlapping on the desk, as a preview on the sign-in screen.
+  Three made-up index cards on the desk, as a preview on the sign-in screen (none of them touch).
   Each shows something Rememba does:
     back:   a question card (Afrikaans: "How are you?")
     middle: the answer, with the four grade buttons and how long until you'd see it again
@@ -174,9 +174,11 @@ const ruled = {
 
 function DemoList() {
   return (
-    <div aria-hidden="true" className="relative mx-auto mt-8 h-[430px] w-full max-w-[520px] select-none">
+    // Laid out at 520 × 440 so no card touches another, then shrunk to fit smaller laptop screens
+    <div aria-hidden="true" className="relative mx-auto mt-8 h-[352px] w-[416px] select-none xl:h-[440px] xl:w-[520px]">
+      <div className="absolute left-0 top-0 h-[440px] w-[520px] origin-top-left scale-[0.8] xl:scale-100">
       {/* The question */}
-      <div className={`${card} absolute left-0 top-2 w-[250px] rotate-[-6deg]`} style={ruled}>
+      <div className={`${card} absolute left-0 top-2 w-[240px] rotate-[-6deg]`} style={ruled}>
         <p className="flex items-center justify-between text-[11px] font-bold uppercase tracking-widest text-[#565b78]">
           <span>Afrikaans</span>
           <span>3 of 12</span>
@@ -185,8 +187,8 @@ function DemoList() {
         <p className="mt-10 rounded-lg bg-[#3b4cca] py-2 text-center text-sm font-bold text-white">Show answer</p>
       </div>
 
-      {/* The answer and the grade buttons */}
-      <div className={`${card} absolute left-[46%] top-[40px] w-[270px] rotate-[4deg]`} style={ruled}>
+      {/* The answer and the grade buttons, to the right of the question */}
+      <div className={`${card} absolute right-0 top-[40px] w-[260px] rotate-[4deg]`} style={ruled}>
         <p className="text-[11px] font-bold uppercase tracking-widest text-[#565b78]">Answer</p>
         <p className="mt-9 text-center font-serif text-2xl font-bold">Hoe gaan dit?</p>
         <div className="mt-8 grid grid-cols-4 gap-1.5 text-center text-xs font-bold text-white">
@@ -207,7 +209,7 @@ function DemoList() {
       </div>
 
       {/* The streak, below the question card without touching it */}
-      <div className={`${card} absolute left-[4%] top-[252px] w-[240px] rotate-[-2deg]`}>
+      <div className={`${card} absolute left-[4%] top-[262px] w-[230px] rotate-[-2deg]`}>
         <p className="flex items-center gap-2 whitespace-nowrap font-serif text-xl font-bold text-[#e8781d]">
           <Icon name="flame" className="h-6 w-6" />
           12-day streak
@@ -218,6 +220,7 @@ function DemoList() {
           ))}
         </div>
         <p className="mt-2 text-xs font-semibold text-[#565b78]">34 cards today · 91% right</p>
+      </div>
       </div>
     </div>
   );
