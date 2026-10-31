@@ -1,0 +1,66 @@
+rules_version = '2';
+
+// Rememba's security rules. Paste them into Firebase: Firestore Database → Rules → Publish.
+//
+// The app's code runs on people's phones, so anyone could change it. These rules run on
+// Google's servers and decide what each signed-in person can read and write, whatever the
+// app sends. In Rememba everything is private: you can only ever read or change your own
+// profile, subjects, decks and cards, and each one must have the right fields and sensible sizes.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function text(value, max) {
+      return value is string && value.size() > 0 && value.size() <= max;
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['name', 'dailyNew', 'days'])
+        && text(request.resource.data.name, 30)
+        && request.resource.data.dailyNew is int
+        && request.resource.data.dailyNew >= 0 && request.resource.data.dailyNew <= 200
+        && request.resource.data.days is map
+        && request.resource.data.days.size() <= 400;
+
+      match /subjects/{subjectId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.keys().hasOnly(['name', 'colour', 'createdAt'])
+          && text(request.resource.data.name, 40)
+          && text(request.resource.data.colour, 9)
+          && request.resource.data.createdAt is number;
+      }
+
+      match /decks/{deckId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.keys().hasOnly(['name', 'colour', 'subjectId', 'createdAt'])
+          && text(request.resource.data.name, 60)
+          && text(request.resource.data.colour, 9)
+          && request.resource.data.subjectId is string && request.resource.data.subjectId.size() <= 128
+          && request.resource.data.createdAt is number;
+      }
+
+      match /cards/{cardId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.keys().hasOnly(['deckId', 'front', 'back', 'tags', 'createdAt', 'reps', 'interval', 'ease', 'lapses', 'due', 'lastReviewed'])
+          && text(request.resource.data.deckId, 128)
+          && text(request.resource.data.front, 500)
+          && text(request.resource.data.back, 500)
+          && request.resource.data.tags is list && request.resource.data.tags.size() <= 10
+          && request.resource.data.reps is int && request.resource.data.reps >= 0
+          && request.resource.data.interval is number && request.resource.data.interval >= 0 && request.resource.data.interval <= 3650
+          && request.resource.data.ease is number && request.resource.data.ease >= 1.3 && request.resource.data.ease <= 5
+          && request.resource.data.lapses is int && request.resource.data.lapses >= 0
+          && request.resource.data.due is number
+          && (request.resource.data.lastReviewed == null || request.resource.data.lastReviewed is number);
+      }
+    }
+  }
+}
