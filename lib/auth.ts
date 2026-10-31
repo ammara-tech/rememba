@@ -8,6 +8,8 @@ import {
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
+  getRedirectResult,
+  signInWithRedirect,
   signOut,
   type User,
 } from "firebase/auth";
@@ -32,13 +34,36 @@ export function useAuth(): AuthState {
 
 export const signInEmail = (email: string, password: string) => signInWithEmailAndPassword(firebase().auth, email.trim(), password);
 export const signUpEmail = (email: string, password: string) => createUserWithEmailAndPassword(firebase().auth, email.trim(), password);
-export const signInGoogle = () => signInWithPopup(firebase().auth, new GoogleAuthProvider());
+/**
+ * Google sign-in opens a small Google window (a popup). If the browser won't open one
+ * (some phones and in-app browsers block them), the whole page goes to Google instead and
+ * comes back signed in.
+ */
+export async function signInGoogle() {
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" }); // always let people choose which Google account
+  try {
+    return await signInWithPopup(firebase().auth, provider);
+  } catch (error) {
+    if (["auth/popup-blocked", "auth/operation-not-supported-in-this-environment"].includes(errorCode(error))) {
+      return signInWithRedirect(firebase().auth, provider);
+    }
+    throw error;
+  }
+}
 export const resetPassword = (email: string) => sendPasswordResetEmail(firebase().auth, email.trim());
 export const signOutUser = () => signOut(firebase().auth);
 
+/** After coming back from a full-page Google sign-in, any error shows up here. */
+export const finishRedirectSignIn = () => getRedirectResult(firebase().auth);
+
+export function errorCode(error: unknown) {
+  return typeof error === "object" && error && "code" in error ? String((error as { code: unknown }).code) : "";
+}
+
 /** Firebase error codes → a plain-language message */
 export function authErrorMessage(error: unknown): string {
-  const code = typeof error === "object" && error && "code" in error ? String((error as { code: unknown }).code) : "";
+  const code = errorCode(error);
   switch (code) {
     case "auth/invalid-credential":
     case "auth/wrong-password":
@@ -60,6 +85,21 @@ export function authErrorMessage(error: unknown): string {
       return "Your browser blocked the Google window. Allow pop-ups for this site and try again.";
     case "auth/network-request-failed":
       return "You're offline. Connect to the internet to sign in.";
+    case "auth/account-exists-with-different-credential":
+      return "You already have an account with that email, made another way. Sign in with your email and password instead.";
+    case "auth/user-disabled":
+      return "This account has been switched off.";
+    // The next ones mean the app's Firebase project isn't set up fully. Visitors can't fix them,
+    // so the message says what's wrong, and the code shown underneath helps the owner.
+    case "auth/unauthorized-domain":
+      return "Sign-in isn't allowed on this web address yet. (Firebase → Authentication → Settings → Authorized domains needs this site's address.)";
+    case "auth/operation-not-allowed":
+    case "auth/configuration-not-found":
+      return "This way of signing in isn't switched on yet. (Firebase → Authentication → Sign-in method.)";
+    case "auth/invalid-api-key":
+    case "auth/api-key-not-valid":
+    case "auth/api-key-not-valid.-please-pass-a-valid-api-key.":
+      return "The app's Firebase settings don't look right. (Check the NEXT_PUBLIC_FIREBASE_ settings in Vercel, then redeploy.)";
     default:
       return "Something went wrong. Please try again.";
   }

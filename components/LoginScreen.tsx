@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Icon from "@/components/Icon";
 import Logo from "@/components/Logo";
 import ThemeToggle from "@/components/ThemeToggle";
-import { authErrorMessage, resetPassword, signInEmail, signInGoogle, signUpEmail } from "@/lib/auth";
+import { authErrorMessage, errorCode, finishRedirectSignIn, resetPassword, signInEmail, signInGoogle, signUpEmail } from "@/lib/auth";
 
 /*
   The sign-in screen. On a laptop the ink-blue side shows three example cards
@@ -17,8 +17,16 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ text: string; code: string } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+
+  // If Google sign-in went the full-page way and failed, say why when the page comes back.
+  useEffect(() => {
+    finishRedirectSignIn().catch((e) => {
+      setError({ text: authErrorMessage(e), code: errorCode(e) });
+      console.error("Sign-in failed:", errorCode(e) || e);
+    });
+  }, []);
 
   async function run(action: () => Promise<unknown>) {
     setBusy(true);
@@ -27,7 +35,8 @@ export default function LoginScreen() {
     try {
       await action();
     } catch (e) {
-      setError(authErrorMessage(e));
+      setError({ text: authErrorMessage(e), code: errorCode(e) });
+      console.error("Sign-in failed:", errorCode(e) || e); // the code, for whoever is fixing it
     } finally {
       setBusy(false);
     }
@@ -40,7 +49,7 @@ export default function LoginScreen() {
 
   async function forgot() {
     if (!email.trim()) {
-      setError("Type your email address first, then press \"Forgot your password?\" again.");
+      setError({ text: "Type your email address first, then press \"Forgot your password?\" again.", code: "" });
       return;
     }
     await run(async () => {
@@ -114,9 +123,10 @@ export default function LoginScreen() {
               </div>
             </div>
             {error && (
-              <p role="alert" className="text-sm font-semibold text-again">
-                {error}
-              </p>
+              <div role="alert" className="text-sm font-semibold text-again">
+                <p>{error.text}</p>
+                {error.code && <p className="mt-1 text-xs font-normal opacity-70">Error code: {error.code}</p>}
+              </div>
             )}
             {notice && (
               <p role="status" className="text-sm text-indigo">
