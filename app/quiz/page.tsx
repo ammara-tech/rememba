@@ -4,6 +4,7 @@ import { Suspense, useEffect, useRef, useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import Icon from "@/components/Icon";
 import SubjectDot from "@/components/SubjectDot";
+import CardPicture from "@/components/CardPicture";
 import { buildQuiz, canChoose, checkTyped, type Question, type QuizMode } from "@/lib/quiz";
 import { useApp } from "@/lib/store";
 import { cardsIn } from "@/lib/tags";
@@ -238,6 +239,7 @@ function Quiz() {
       </p>
       <section className="index-card mt-3 flex min-h-56 flex-col px-6 pb-8 pt-4">
         <p className="text-xs font-bold uppercase tracking-widest text-paper-soft">Question</p>
+        {card?.picture && <CardPicture cardId={card.id} hasPicture question={q.prompt} className="mx-auto mt-4 h-44 w-full max-w-sm bg-white sm:h-56" />}
         <p className={`m-auto whitespace-pre-wrap break-words text-center font-serif font-bold ${q.prompt.length > 120 ? "text-xl" : "text-3xl"}`}>{q.prompt}</p>
       </section>
 

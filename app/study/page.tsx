@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Icon from "@/components/Icon";
+import CardPicture from "@/components/CardPicture";
 import { review, undoReview } from "@/lib/actions";
 import { buildQueue, newLeftToday, nextQueue } from "@/lib/queue";
 import { gapLabel, isNew } from "@/lib/srs";
@@ -189,9 +190,9 @@ function Study() {
       {/* The card: front, then turned over to the back */}
       <div className={`flip mt-3 ${shown ? "flipped" : ""}`}>
         <div className="flip-inner">
-          <Face label="Question" text={current.front} hidden={shown} />
+          <Face label="Question" text={current.front} hidden={shown} picture={current.picture ? current.id : undefined} />
           <div className="back">
-            <Face label="Answer" text={current.back} question={current.front} hidden={!shown} />
+            <Face label="Answer" text={current.back} question={current.front} hidden={!shown} picture={current.picture ? current.id : undefined} small />
           </div>
         </div>
       </div>
@@ -225,10 +226,11 @@ function Study() {
 }
 
 /* One side of the index card */
-function Face({ label, text, question, hidden }: { label: string; text: string; question?: string; hidden: boolean }) {
+function Face({ label, text, question, hidden, picture, small }: { label: string; text: string; question?: string; hidden: boolean; picture?: string; small?: boolean }) {
   return (
     <section aria-hidden={hidden} className="index-card flex min-h-72 flex-col px-6 pb-8 pt-4 sm:min-h-80">
       <p className="text-xs font-bold uppercase tracking-widest text-paper-soft">{label}</p>
+      {picture && <CardPicture cardId={picture} hasPicture question={question ?? text} className={`mx-auto mt-4 bg-white ${small ? "h-20 w-28" : "h-44 w-full max-w-sm sm:h-56"}`} />}
       {question && <p className="mt-8 text-center text-sm text-paper-soft">{question}</p>}
       <p className={`m-auto whitespace-pre-wrap break-words text-center font-serif font-bold ${text.length > 120 ? "text-xl" : "text-3xl sm:text-4xl"}`}>{text}</p>
     </section>

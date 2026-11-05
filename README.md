@@ -13,6 +13,14 @@ Built with Next.js, TypeScript, Tailwind CSS and Firebase (Authentication and Cl
   Show one subject at a time, and study or quiz a whole subject at once. Deleting a subject keeps its decks.
 - **Decks and cards.** Make decks, add cards one at a time (Ctrl + Enter adds the next one), edit, and delete
   with Undo. Start a card again as new if you'd like to relearn it.
+- **Pictures on cards.** Add a diagram, a map or a photo (or take one with your phone's camera) to a card. It's
+  shown with the question when you study or quiz, and small on the answer side. The phone makes it small first,
+  so even a big photo saves in a moment.
+- **Share a deck with a link.** Press Share on a deck to make a link, then copy it or send it on WhatsApp.
+  Anyone signed in who opens it sees the deck's name, who shared it and the first few cards, and can add their
+  own copy (every card starts as new; they get the cards, never your progress). After you change the deck,
+  "Update the shared copy" sends the new cards to the same link, and "Stop sharing" makes the link stop working.
+  "Open a shared deck" on the home page takes a pasted link or code.
 - **Tags and search.** Tag cards (like `exam` or `chapter 3`), then search every card in every deck, filter by
   tag, and study or quiz just those cards. Search ignores capitals and accents, so "more" finds "môre".
 - **Add many at once, three ways:**
@@ -50,7 +58,7 @@ Rememba is free for students. If it grows, this is how it could pay for itself:
 | Plan | For | What's in it |
 |---|---|---|
 | **Free** | Students | Everything above, for one person |
-| **Pro** | Serious learners | An AI card maker (suggests cards from your notes or a PDF), pictures and audio on cards, sharing decks with friends, a study reminder each day |
+| **Pro** | Serious learners | An AI card maker (suggests cards from your notes or a PDF), audio on cards, a study reminder each day |
 | **Teams** | Businesses | Training decks for staff, with a dashboard showing who has studied what and how well they know it |
 
 ## Design
@@ -70,12 +78,15 @@ Vitest, Vercel.
 ## Project structure
 ```
 app/              Pages: subjects and decks (/), one deck (/decks/[id]), studying (/study), quizzes (/quiz),
-                  progress (/progress), settings (/settings), the app manifest, icons and the light/dark script
-components/       The sign-in screen, the header and phone bar, the colour picker, the Undo bar, icons and the logo
+                  progress (/progress), settings (/settings), a shared deck (/shared), the app manifest,
+                  icons and the light/dark script
+components/       The sign-in screen, the header and phone bar, the colour picker, the Undo bar, the Share panel,
+                  choosing and showing card pictures, icons and the logo
 lib/              The logic: spaced repetition (srs.ts), the study queue (queue.ts), streaks and charts
                   (stats.ts), adding many cards from columns, notes or files (importer.ts), quizzes
-                  (quiz.ts), tags and search (tags.ts), the sample decks, the live store (store.ts) and
-                  every change to the database (actions.ts)
+                  (quiz.ts), tags and search (tags.ts), sharing decks (share.ts), card pictures (picture.ts,
+                  pictures.ts), the sample decks, the live store (store.ts) and every change to the database
+                  (actions.ts)
 public/sw.js      The service worker that lets the app open offline
 firestore.rules   Who can read and change what (runs on Google's servers)
 tests/            Unit tests (npm test)
@@ -108,6 +119,18 @@ headings are skipped, "Q:" followed by "A:" makes one card, and otherwise a line
 " – ". Files: a .csv is read as a spreadsheet (understanding "quoted, fields"), anything else as Tab-separated
 lines like Anki and Quizlet export; Anki's `#` settings lines are skipped and its HTML is turned into text.
 
+**Pictures** (`lib/picture.ts`, `lib/pictures.ts`). Firebase's file storage needs a paid plan, so a picture is
+saved as a small JPEG written as text in the database, apart from the card (`users/{uid}/pictures/{card id}`).
+The phone shrinks it first, and makes it smaller again if it's still too big. Keeping pictures apart means the
+list of cards stays small and quick, and a picture is only loaded when its card is shown, then kept in memory.
+Deleting a card deletes its picture, and Undo puts it back.
+
+**Sharing** (`lib/share.ts`). Sharing saves a copy of the deck's words (front, back and tags) under a random
+12-character code, at `shared/{code}`. The link is the code, so knowing it is the invitation. Codes use letters
+and digits that can't be mixed up (no 0/O or 1/I/L), and every one is equally likely, so they can't be guessed.
+The copy doesn't follow your edits by itself: the panel compares it with the deck and offers "Update the shared
+copy". Opening a deck someone shared makes your own deck from it, with every card starting as new.
+
 **Your history** (`lib/stats.ts`). Each answer adds to a small entry for that day (reviewed, right, new). The
 streak, charts and totals are worked out from those entries on the device, even offline. About a year is kept.
 
@@ -117,15 +140,18 @@ works offline and syncs later; `public/sw.js` keeps a copy of the app itself. Bi
 are written in batches of up to 450 changes, under Firestore's limit of 500.
 
 **Security rules** (`firestore.rules`). Everything is under your own account: only you can read or change your
-profile, subjects, decks and cards, and each one is checked for the right fields and sensible sizes (for example, card
-sides up to 500 characters and an ease between 1.3 and 5).
+profile, subjects, decks, cards and pictures, and each one is checked for the right fields and sensible sizes (for
+example, card sides up to 500 characters, an ease between 1.3 and 5, and a picture that's one small JPEG). The one
+exception is a shared deck: anyone signed in can open one by its code, but nobody can list them, and only the
+person who shared it can change or delete it.
 
 ## Tests
 `npm test` runs the unit tests in `tests/` with Vitest: the spaced repetition maths (gaps, ease, forgetting,
 the button labels), what's due and the order of the study queue, the new card limit, streaks (including one
 that's still alive until midnight, and your best ever), the 30-day chart and the week's forecast, adding cards
 from columns, notes, Anki and CSV files, quizzes (fair options, forgiving typed answers), tags, search and
-what a subject covers, and the sample decks. A GitHub Action runs them on every push (`.github/workflows/tests.yml`).
+what a subject covers, the sample decks, share codes and links (including reading a pasted link, and a broken
+shared deck not breaking the page), the shared copy and knowing when it's out of date, and shrinking pictures. A GitHub Action runs them on every push (`.github/workflows/tests.yml`).
 
 ## Setup (run it yourself)
 1. **Firebase:** create a project at [console.firebase.google.com](https://console.firebase.google.com).
@@ -154,10 +180,13 @@ your cards is `firestore.rules`.
 
 ## Known gaps
 - **The security rules aren't in the automatic tests.** They'd need the Firebase emulator; they're tested by hand.
-- **Text only.** Cards can't have pictures or audio yet.
+- **No audio.** Cards can have a picture, but not sound yet.
+- **Pictures aren't shared.** A shared deck has the words on the cards, not their pictures, and at most 500 cards.
+- **A shared copy doesn't update itself.** After changing a shared deck, press "Update the shared copy".
 - **No AI.** Cards come from what you type, paste or import; an AI card maker is an idea for the Pro plan.
 - **No reminders.** Rememba can't nudge you to study; you have to remember to open it (we know: a memory app you have to remember to open).
-- **One person per account.** Decks can't be shared yet (that's the Pro and Teams idea above).
+- **One person per account.** Sharing gives others a copy; people can't study the same deck together and see
+  each other's progress (that's the Teams idea above).
 - **Two devices at once:** answering the same card on two devices offline at the same time keeps the last
   answer that syncs.
 

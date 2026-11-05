@@ -6,6 +6,8 @@
   users/{uid}/subjects/{id}   a subject (Biology, Maths…): its name and colour, to group decks
   users/{uid}/decks/{id}      a deck: its name, colour and subject
   users/{uid}/cards/{id}      a card: front, back, tags, which deck, and when you should see it again
+  users/{uid}/pictures/{id}   a card's picture (same id as the card), loaded only when it's shown
+  shared/{code}               a copy of a deck's words that you shared with a link (lib/share.ts)
 
   Times are milliseconds (Date.now()). Intervals are whole days.
 */
@@ -29,6 +31,7 @@ export type Card = Schedule & {
   back: string;
   tags: string[]; // e.g. ["exam", "chapter 3"], lowercase
   createdAt: number;
+  picture?: boolean; // true if it has a picture (lib/picture.ts), shown with the question
 };
 
 export type Deck = {
@@ -37,6 +40,7 @@ export type Deck = {
   colour: string;
   subjectId: string; // "" = no subject
   createdAt: number;
+  shareCode?: string; // set while the deck is shared with a link (lib/share.ts)
 };
 
 export type Subject = {

@@ -167,6 +167,10 @@ export default function Home() {
             Subjects and decks
           </h2>
           <div className="flex flex-wrap gap-2">
+            <Link href="/shared" className="btn-quiet">
+              <Icon name="link" className="h-4 w-4" />
+              Open a shared deck
+            </Link>
             <button type="button" onClick={() => setForm(form === "subject" ? null : "subject")} className="btn-quiet">
               <Icon name="plus" className="h-4 w-4" />
               Subject

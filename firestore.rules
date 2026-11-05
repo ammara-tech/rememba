@@ -5,7 +5,9 @@ rules_version = '2';
 // The app's code runs on people's phones, so anyone could change it. These rules run on
 // Google's servers and decide what each signed-in person can read and write, whatever the
 // app sends. In Rememba everything is private: you can only ever read or change your own
-// profile, subjects, decks and cards, and each one must have the right fields and sensible sizes.
+// profile, subjects, decks, cards and pictures, and each one must have the right fields and
+// sensible sizes. The one exception is a deck you share with a link (shared/{code}): anyone
+// signed in who has the link can read it, but only you can change or delete it.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -39,17 +41,18 @@ service cloud.firestore {
       match /decks/{deckId} {
         allow read, delete: if isOwner(uid);
         allow create, update: if isOwner(uid)
-          && request.resource.data.keys().hasOnly(['name', 'colour', 'subjectId', 'createdAt'])
+          && request.resource.data.keys().hasOnly(['name', 'colour', 'subjectId', 'createdAt', 'shareCode'])
           && text(request.resource.data.name, 60)
           && text(request.resource.data.colour, 9)
           && request.resource.data.subjectId is string && request.resource.data.subjectId.size() <= 128
-          && request.resource.data.createdAt is number;
+          && request.resource.data.createdAt is number
+          && (!('shareCode' in request.resource.data) || text(request.resource.data.shareCode, 12));
       }
 
       match /cards/{cardId} {
         allow read, delete: if isOwner(uid);
         allow create, update: if isOwner(uid)
-          && request.resource.data.keys().hasOnly(['deckId', 'front', 'back', 'tags', 'createdAt', 'reps', 'interval', 'ease', 'lapses', 'due', 'lastReviewed'])
+          && request.resource.data.keys().hasOnly(['deckId', 'front', 'back', 'tags', 'createdAt', 'reps', 'interval', 'ease', 'lapses', 'due', 'lastReviewed', 'picture'])
           && text(request.resource.data.deckId, 128)
           && text(request.resource.data.front, 500)
           && text(request.resource.data.back, 500)
@@ -59,8 +62,38 @@ service cloud.firestore {
           && request.resource.data.ease is number && request.resource.data.ease >= 1.3 && request.resource.data.ease <= 5
           && request.resource.data.lapses is int && request.resource.data.lapses >= 0
           && request.resource.data.due is number
-          && (request.resource.data.lastReviewed == null || request.resource.data.lastReviewed is number);
+          && (request.resource.data.lastReviewed == null || request.resource.data.lastReviewed is number)
+          && (!('picture' in request.resource.data) || request.resource.data.picture is bool);
       }
+
+      // A card's picture: one small JPEG, written as text
+      match /pictures/{cardId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.keys().hasOnly(['image'])
+          && request.resource.data.image is string
+          && request.resource.data.image.size() <= 300000
+          && request.resource.data.image.matches('^data:image/jpeg;base64,.*');
+      }
+    }
+
+    // A deck shared with a link. Knowing the code is the invitation: anyone signed in can open
+    // one by its code, but nobody can list them. Only the person who shared it can change or delete it.
+    match /shared/{code} {
+      function goodShared(d) {
+        return d.keys().hasOnly(['name', 'colour', 'ownerName', 'createdBy', 'cards', 'createdAt', 'updatedAt'])
+          && text(d.name, 60)
+          && text(d.colour, 9)
+          && d.ownerName is string && d.ownerName.size() <= 30
+          && d.createdBy == request.auth.uid
+          && d.cards is list && d.cards.size() <= 500
+          && d.updatedAt is number;
+      }
+      allow get: if request.auth != null;
+      allow list: if false;
+      allow create: if request.auth != null && code.size() == 12 && goodShared(request.resource.data);
+      allow update: if request.auth != null && resource.data.createdBy == request.auth.uid && goodShared(request.resource.data);
+      allow delete: if request.auth != null && resource.data.createdBy == request.auth.uid;
     }
   }
 }

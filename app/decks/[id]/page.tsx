@@ -5,7 +5,10 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import Icon from "@/components/Icon";
 import UndoBar from "@/components/UndoBar";
-import { addCards, deleteCard, deleteDeck, editCard, editDeck, resetCard, restoreCards } from "@/lib/actions";
+import { addCard, addCards, deleteCard, deleteDeck, editCard, editDeck, resetCard, restoreCards } from "@/lib/actions";
+import CardPicture from "@/components/CardPicture";
+import PicturePicker from "@/components/PicturePicker";
+import SharePanel from "@/components/SharePanel";
 import { MAX_SIDE, parseCards, parseFile, parseNotes, type Pair } from "@/lib/importer";
 import { cardStatus, deckCounts, isDue } from "@/lib/queue";
 import ColourPicker from "@/components/ColourPicker";
@@ -16,8 +19,9 @@ import { useApp } from "@/lib/store";
 import type { Card, Subject } from "@/lib/types";
 
 /*
-  One deck: add cards one at a time, or many at once (two columns, study notes or a file),
-  tag them, search them, edit or delete them, and study or quiz just this deck.
+  One deck: add cards one at a time (with a picture if you like), or many at once (two columns,
+  study notes or a file), tag them, search them, edit or delete them, study or quiz just this
+  deck, and share it with a link (components/SharePanel.tsx).
 */
 
 type PasteMode = "columns" | "notes" | "file";
@@ -29,6 +33,8 @@ export default function DeckPage() {
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
   const [tags, setTags] = useState("");
+  const [picture, setPicture] = useState<string | null | undefined>(undefined);
+  const [sharing, setSharing] = useState(false);
   const [importing, setImporting] = useState(false);
   const [mode, setMode] = useState<PasteMode>("columns");
   const [pasted, setPasted] = useState("");
@@ -64,9 +70,10 @@ export default function DeckPage() {
   function add(e?: FormEvent) {
     e?.preventDefault();
     if (!front.trim() || !back.trim() || !deck) return;
-    addCards(deck.id, [{ front, back }], parseTags(tags));
+    addCard(deck.id, { front, back }, parseTags(tags), picture ?? null);
     setFront("");
     setBack(""); // the tags stay, for the next card
+    setPicture(undefined);
     frontBox.current?.focus();
   }
 
@@ -134,10 +141,16 @@ export default function DeckPage() {
                 <Icon name="pencil" className="h-4 w-4" />
                 Edit
               </button>
+              <button type="button" onClick={() => setSharing((v) => !v)} aria-expanded={sharing} className={`btn-quiet ${deck.shareCode ? "!border-indigo !text-indigo" : ""}`}>
+                <Icon name="share" className="h-4 w-4" />
+                {deck.shareCode ? "Shared" : "Share"}
+              </button>
             </div>
           </div>
         )}
       </header>
+
+      {sharing && <SharePanel deck={deck} cards={cards} onClose={() => setSharing(false)} />}
 
       {/* Add a card */}
       <section aria-labelledby="add-title" className="mt-6 rounded-2xl border border-line bg-panel p-5">
@@ -273,6 +286,10 @@ export default function DeckPage() {
               Tags <span className="font-normal text-ink-soft">(optional, separated by commas; they stay for the next card)</span>
               <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="e.g. exam, chapter 3" className="field mt-1 font-normal" />
             </label>
+            <div className="sm:col-span-2">
+              <PicturePicker id="new-card-picture" value={picture} hadPicture={false} onChange={setPicture} />
+              <p className="mt-1 text-xs text-ink-soft">Optional: a diagram, a map or a photo, shown with the question.</p>
+            </div>
             <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
               <button type="submit" disabled={!front.trim() || !back.trim()} className="btn">
                 <Icon name="plus" />
@@ -368,6 +385,7 @@ function CardRow({ card, now, onDelete }: { card: Card; now: number; onDelete: (
   const [front, setFront] = useState(card.front);
   const [back, setBack] = useState(card.back);
   const [tagText, setTagText] = useState(card.tags.join(", "));
+  const [picture, setPicture] = useState<string | null | undefined>(undefined);
   const status = cardStatus(card, now);
   const tone = isNew(card) ? "bg-indigo-soft text-indigo" : isDue(card, now) ? "bg-coral/15 text-coral" : "bg-good/15 text-good";
 
@@ -377,7 +395,8 @@ function CardRow({ card, now, onDelete }: { card: Card; now: number; onDelete: (
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            editCard(card, front, back, tagText);
+            editCard(card, front, back, tagText, picture);
+            setPicture(undefined);
             setEditing(false);
           }}
           className="grid gap-2 sm:grid-cols-2"
@@ -394,11 +413,21 @@ function CardRow({ card, now, onDelete }: { card: Card; now: number; onDelete: (
             Tags
             <input value={tagText} onChange={(e) => setTagText(e.target.value)} placeholder="e.g. exam, chapter 3" className="field mt-1 text-ink" />
           </label>
+          <div className="sm:col-span-2">
+            <PicturePicker id={`picture-${card.id}`} value={picture} hadPicture={Boolean(card.picture)} onChange={setPicture} />
+          </div>
           <div className="flex gap-2 sm:col-span-2">
             <button type="submit" className="btn px-4 py-2">
               Save
             </button>
-            <button type="button" onClick={() => setEditing(false)} className="btn-quiet px-4 py-2">
+            <button
+              type="button"
+              onClick={() => {
+                setPicture(undefined);
+                setEditing(false);
+              }}
+              className="btn-quiet px-4 py-2"
+            >
               Cancel
             </button>
           </div>
@@ -409,6 +438,7 @@ function CardRow({ card, now, onDelete }: { card: Card; now: number; onDelete: (
 
   return (
     <li className="flex flex-wrap items-start gap-3 p-4">
+      {card.picture && <CardPicture cardId={card.id} hasPicture question={card.front} className="h-14 w-14 shrink-0 border border-line bg-white object-cover" />}
       <div className="grid min-w-0 flex-1 basis-64 gap-1 sm:grid-cols-2 sm:gap-4">
         <p className="whitespace-pre-wrap break-words font-semibold">{card.front}</p>
         <p className="whitespace-pre-wrap break-words text-ink-soft">{card.back}</p>
