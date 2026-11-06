@@ -158,7 +158,7 @@ export default function LoginScreen() {
               {mode === "signIn" ? "Create an account" : "Sign in"}
             </button>
           </p>
-          <p className="mt-6 text-sm text-ink-soft">Only you can see your cards. They&apos;re stored in your own private space in Google&apos;s Firebase database.</p>
+          <p className="mt-6 text-sm text-ink-soft">Only you can see your cards, unless you share a deck with a link. They&apos;re stored in your own private space in Google&apos;s Firebase database.</p>
         </div>
       </main>
     </div>
