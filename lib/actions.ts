@@ -1,9 +1,9 @@
 "use client";
 
-import { collection, deleteField, doc, getDoc, setDoc, updateDoc, writeBatch } from "firebase/firestore";
+import { collection, deleteField, doc, getDoc, getDocs, setDoc, updateDoc, writeBatch } from "firebase/firestore";
 import { firebase } from "@/lib/firebase";
 import { MAX_SIDE, type Pair } from "@/lib/importer";
-import { DECK_COLOURS, type Sample } from "@/lib/samples";
+import { DECK_COLOURS, SAMPLES, type Sample } from "@/lib/samples";
 import { isNew, newSchedule, schedule } from "@/lib/srs";
 import { recordReview } from "@/lib/stats";
 import { getApp, reportProblem } from "@/lib/store";
@@ -270,4 +270,32 @@ export function setProfile(change: { name?: string; dailyNew?: number }) {
   }
   if (change.dailyNew !== undefined) data.dailyNew = Math.min(200, Math.max(0, Math.round(change.dailyNew)));
   if (Object.keys(data).length) quietly(setDoc(doc(db(), "users", me()), data, { merge: true }));
+}
+
+// ---------- Try the demo ----------
+
+/** For a new demo (lib/demo.ts): both ready-made decks, in a subject, ready to study */
+export function seedDemo() {
+  const subjectId = createSubject("Examples", DECK_COLOURS[0]);
+  for (const sample of SAMPLES) addSample(sample, subjectId);
+  setProfile({ name: "Guest" });
+}
+
+/**
+ * Deletes everything saved for the signed-in person: cards, pictures, decks (and their shared
+ * copies) and subjects. The small profile is left (the rules only allow writing it, not deleting it). Used when a demo ends. Needs a connection, so it waits.
+ */
+export async function deleteEverything() {
+  const uid = me();
+  const parts = await Promise.all(["cards", "pictures", "decks", "subjects"].map((name) => getDocs(collection(db(), "users", uid, name))));
+  const refs = parts.flatMap((p) => p.docs.map((d) => d.ref));
+  for (const d of parts[2].docs) {
+    const code = d.data().shareCode;
+    if (typeof code === "string" && code) refs.push(doc(db(), "shared", code));
+  }
+  for (let i = 0; i < refs.length; i += 450) {
+    const batch = writeBatch(db()); // Firestore allows 500 changes per batch
+    refs.slice(i, i + 450).forEach((r) => batch.delete(r));
+    await batch.commit();
+  }
 }

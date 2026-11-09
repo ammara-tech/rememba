@@ -5,6 +5,7 @@ import Icon from "@/components/Icon";
 import ThemeToggle from "@/components/ThemeToggle";
 import { setProfile } from "@/lib/actions";
 import { signOutUser, useAuth } from "@/lib/auth";
+import { endDemo } from "@/lib/demo";
 import { useApp } from "@/lib/store";
 
 /* /settings: your name, how many new cards a day, the theme, keyboard shortcuts and signing out */
@@ -77,8 +78,8 @@ export default function Settings() {
 
       <section className="rounded-2xl border border-line bg-panel p-5">
         <h2 className="font-serif text-xl font-bold">Account</h2>
-        <p className="mt-1 text-sm text-ink-soft">Signed in as {auth.status === "signedIn" ? auth.user.email : ""}</p>
-        <button type="button" onClick={() => signOutUser()} className="btn-quiet mt-4">
+        <p className="mt-1 text-sm text-ink-soft">{auth.status === "signedIn" && auth.user.isAnonymous ? "You're trying the demo as a guest. Signing out ends the demo and deletes its cards." : `Signed in as ${auth.status === "signedIn" ? auth.user.email : ""}`}</p>
+        <button type="button" onClick={() => (auth.status === "signedIn" && auth.user.isAnonymous ? endDemo() : signOutUser())} className="btn-quiet mt-4">
           <Icon name="logout" />
           Sign out
         </button>

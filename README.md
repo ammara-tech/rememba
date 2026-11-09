@@ -51,6 +51,9 @@ Built with Next.js, TypeScript, Tailwind CSS and Firebase (Authentication and Cl
   online.
 - **Sign in** with email and password (with a reset email) or Google. If the browser blocks Google's pop-up window, the whole page goes to Google instead. Sign-in errors say what went wrong in plain words, with Firebase's error code underneath. Light and dark themes.
 - **Fast first load:** a new visitor gets the sign-in screen straight from the server, without waiting for Firebase to load. Someone who has signed in on the device before sees the loading screen instead while Firebase checks (a small hint saved on the device decides which). Google's sign-in helper only loads when someone presses **Continue with Google**, not on every visit.
+- **Try the demo**, with no account: you're signed in as a guest with both example decks ready to study. A strip
+  at the top says it's a demo, and **End the demo** deletes everything and the guest account. A link ending in
+  `?demo` puts the demo button at the top of the sign-in screen.
 
 ## Plans
 Rememba is free for students. If it grows, this is how it could pay for itself:
@@ -93,6 +96,12 @@ tests/            Unit tests (npm test)
 ```
 
 ## How the important parts work
+
+**Try the demo** (`lib/demo.ts`). The guest is signed in with Firebase's anonymous sign-in, so they get their own
+private account and the same security rules protect them as anyone else. The first time a guest has no decks, the two
+example decks are added (once: a note on the device remembers). Ending the demo deletes the guest's cards, pictures,
+decks (and any shared copies) and subjects, then the guest account itself.
+
 **Spaced repetition** (`lib/srs.ts`). Each card keeps an "ease" (2.5 to start) and a gap in days. A new card
 needs Good on day 1 and day 3; after that, Good multiplies the gap by the ease, so a card you keep getting
 right comes back after about 1, 3, 8, 20 and 50 days. Easy stretches the gap more and makes the card easier;
@@ -155,7 +164,7 @@ shared deck not breaking the page), the shared copy and knowing when it's out of
 
 ## Setup (run it yourself)
 1. **Firebase:** create a project at [console.firebase.google.com](https://console.firebase.google.com).
-   - Authentication → Get started → turn on **Email/Password** and **Google**.
+   - Authentication → Get started → turn on **Email/Password**, **Google** and **Anonymous** (for Try the demo).
    - Firestore Database → Create database (production mode).
    - Firestore Database → **Rules**: paste in `firestore.rules` and press **Publish**.
    - Project settings → General → Your apps → add a **Web app** to get its settings.
@@ -179,6 +188,8 @@ These are public by design: they say which Firebase project to use, they don't u
 your cards is `firestore.rules`.
 
 ## Known gaps
+- **Demos that are never ended stay in the database.** If a guest just closes the tab, their example decks and
+  guest account stay in Firebase. It's small, and the free plan has plenty of room, but nothing cleans it up automatically yet.
 - **The security rules aren't in the automatic tests.** They'd need the Firebase emulator; they're tested by hand.
 - **No audio.** Cards can have a picture, but not sound yet.
 - **Pictures aren't shared.** A shared deck has the words on the cards, not their pictures, and at most 500 cards.

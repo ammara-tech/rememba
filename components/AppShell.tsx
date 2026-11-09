@@ -6,6 +6,8 @@ import { firebaseConfigured } from "@/lib/firebase";
 import { connect, disconnect, reportProblem, useApp } from "@/lib/store";
 import Header from "@/components/Header";
 import Icon from "@/components/Icon";
+import DemoBanner from "@/components/DemoBanner";
+import { seedDemoOnce } from "@/lib/demo";
 import LoginScreen from "@/components/LoginScreen";
 import Logo from "@/components/Logo";
 import PhoneNav from "@/components/PhoneNav";
@@ -31,9 +33,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const user = auth.status === "signedIn" ? auth.user : null;
 
   useEffect(() => {
-    if (user) connect(user.uid, startingName(user));
+    if (user) connect(user.uid, user.isAnonymous ? "Guest" : startingName(user));
     else disconnect();
   }, [user]);
+
+  // "Try the demo": a guest with no decks yet gets the example decks, once (lib/demo.ts)
+  const demo = Boolean(user?.isAnonymous);
+  useEffect(() => {
+    if (demo && user && app.ready && app.uid === user.uid) seedDemoOnce(user.uid, app.decks.length === 0);
+  }, [demo, user, app.ready, app.uid, app.decks.length]);
 
   if (!firebaseConfigured) return <SetupNeeded />;
   // Until Firebase has checked, both screens are on the page and the saved hint picks one
@@ -58,6 +66,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-panel focus:px-4 focus:py-2">
         Skip to content
       </a>
+      {demo && <DemoBanner />}
       <Header />
       <main id="main" className="mx-auto max-w-5xl px-4 pb-28 pt-6 sm:px-6 sm:pb-16">
         {!app.online && (
