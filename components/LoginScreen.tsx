@@ -81,7 +81,7 @@ export default function LoginScreen() {
           Rememba
         </p>
         <DemoList />
-        <h1 className="relative mt-auto max-w-md font-serif text-5xl font-bold leading-[1.05] tracking-tight">Remember what you study.</h1>
+        <p className="relative mt-auto max-w-md font-serif text-5xl font-bold leading-[1.05] tracking-tight">Remember what you study.</p>
         <p className="relative mt-5 max-w-md text-lg text-white/85">
           Flashcards that show each card just before you&apos;d forget it, so ten minutes a day is enough. Keep a streak, watch your progress, and study offline.
         </p>
@@ -98,7 +98,7 @@ export default function LoginScreen() {
 
         <div className="m-auto w-full max-w-sm py-10">
           {fromDemoLink && <div className="mb-8">{demoBox}</div>}
-          <h2 className="font-serif text-3xl font-bold tracking-tight">{mode === "signIn" ? "Welcome back" : "Create your account"}</h2>
+          <h1 className="font-serif text-3xl font-bold tracking-tight">{mode === "signIn" ? "Welcome back" : "Create your account"}</h1>
           <p className="mt-2 text-ink-soft">{mode === "signIn" ? "Sign in to keep studying." : "It's free, and takes a minute."}</p>
 
           <button type="button" disabled={busy} onClick={() => run(signInGoogle)} className="btn-quiet mt-8 w-full py-3">
