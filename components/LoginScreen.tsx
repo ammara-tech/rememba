@@ -1,15 +1,18 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import Icon from "@/components/Icon";
 import Logo from "@/components/Logo";
 import ThemeToggle from "@/components/ThemeToggle";
 import { authErrorMessage, errorCode, finishRedirectSignIn, resetPassword, signInDemo, signInEmail, signInGoogle, signUpEmail } from "@/lib/auth";
 
 /*
-  The sign-in screen. On a laptop the ink-blue side shows three example cards
-  (a question, its answer with the four grade buttons, and a streak), so people see
-  what Rememba does before they sign up.
+  The sign-in screen: one big index card under a night sky. The front asks a question
+  ("What's the best way to remember what you study?") and answers it, the way Rememba works.
+  Turning it over shows the sign-in form. It turns over by itself when there's something to see
+  on the back (an error, a reset email, or creating an account), keyboard focus moves to the side
+  that's showing, and the hidden side can't be reached (inert). With reduced motion it switches
+  without turning. "Try the demo" sits under the card, or above it when opened from my portfolio.
 */
 export default function LoginScreen() {
   const [mode, setMode] = useState<"signIn" | "create">("signIn");
@@ -19,6 +22,9 @@ export default function LoginScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<{ text: string; code: string } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [flipped, setFlipped] = useState(false);
+  const frontHeading = useRef<HTMLHeadingElement>(null);
+  const backHeading = useRef<HTMLHeadingElement>(null);
   // Opened from a "Try the demo" link (…/?demo): the demo box goes to the top
   const [fromDemoLink, setFromDemoLink] = useState(false);
   useEffect(() => {
@@ -26,7 +32,7 @@ export default function LoginScreen() {
   }, []);
 
   const demoBox = (
-    <div className="rounded-xl border border-dashed border-indigo/40 bg-indigo-soft p-4">
+    <div className="rounded-2xl border border-dashed border-indigo/50 bg-indigo-soft p-4">
       <p className="font-bold">Just looking?</p>
       <p className="mt-1 text-sm text-ink-soft">Try Rememba with two example decks. No account needed, and everything is deleted when you end the demo.</p>
       <button type="button" disabled={busy} onClick={() => run(signInDemo)} className="btn mt-3 w-full py-2.5">
@@ -73,35 +79,79 @@ export default function LoginScreen() {
     });
   }
 
+  // The sign-in card shows its back (the form) straight away when there's something to do there
+  const showBack = flipped || Boolean(error) || Boolean(notice) || mode === "create";
+
+  function turn(to: boolean) {
+    setFlipped(to);
+    // Move keyboard focus to the side that's now showing
+    setTimeout(() => (to ? backHeading : frontHeading).current?.focus(), 50);
+  }
+
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
-      <aside className="relative hidden overflow-hidden bg-[#232869] p-12 text-white lg:flex lg:flex-col">
-        <p className="flex items-center gap-2 font-serif text-2xl font-bold">
-          <Logo className="h-9 w-9" />
+    <div className="night flex min-h-screen flex-col">
+      <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-5 py-5">
+        <p className="flex items-center gap-2 font-serif text-xl font-bold">
+          <Logo />
           Rememba
         </p>
-        <DemoList />
-        <p className="relative mt-auto max-w-md font-serif text-5xl font-bold leading-[1.05] tracking-tight">Remember what you study.</p>
-        <p className="relative mt-5 max-w-md text-lg text-white/85">
-          Flashcards that show each card just before you&apos;d forget it, so ten minutes a day is enough. Keep a streak, watch your progress, and study offline.
-        </p>
-      </aside>
+        <ThemeToggle />
+      </div>
 
-      <main className="flex flex-col px-5 py-6 sm:px-10">
-        <div className="flex items-center justify-between">
-          <p className="flex items-center gap-2 font-serif text-xl font-bold lg:invisible">
-            <Logo />
-            Rememba
-          </p>
-          <ThemeToggle />
-        </div>
+      <main className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center px-5 pb-16">
+        {fromDemoLink && <div className="mb-8">{demoBox}</div>}
 
-        <div className="m-auto w-full max-w-sm py-10">
-          {fromDemoLink && <div className="mb-8">{demoBox}</div>}
-          <h1 className="font-serif text-3xl font-bold tracking-tight">{mode === "signIn" ? "Welcome back" : "Create your account"}</h1>
-          <p className="mt-2 text-ink-soft">{mode === "signIn" ? "Sign in to keep studying." : "It's free, and takes a minute."}</p>
+        {/* One big index card that turns over: a question on the front, the sign-in form on the back */}
+        <div className="flip">
+          <div className={`flip-inner ${showBack ? "flipped" : ""}`}>
+            {/* Front: the question */}
+            <section inert={showBack} aria-hidden={showBack} className="index-card flex flex-col rounded-3xl p-7 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.7)] sm:p-10">
+              <p className="text-xs font-bold uppercase tracking-[0.25em] text-paper-soft">Card 1 of 1 · Question</p>
+              <h1 ref={frontHeading} tabIndex={-1} className="mt-10 font-serif text-3xl font-bold leading-tight outline-none sm:text-4xl">
+                What&apos;s the best way to remember what you study?
+              </h1>
+              <p className="mt-6 text-lg text-paper-soft">
+                Seeing each card again just before you&apos;d forget it. Rememba does the timing for you, so ten minutes a day is enough.
+              </p>
+              <div className="mt-10 grid gap-3 sm:grid-cols-2">
+                <button type="button" onClick={() => turn(true)} className="rounded-xl bg-[#1b1e33] px-4 py-3 font-bold text-white hover:opacity-90">
+                  Turn over to sign in
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("create");
+                    turn(true);
+                  }}
+                  className="rounded-xl border-2 border-[#1b1e33] px-4 py-3 font-bold text-[#1b1e33] hover:bg-[#1b1e33]/5"
+                >
+                  New? Make an account
+                </button>
+              </div>
+            </section>
 
-          <button type="button" disabled={busy} onClick={() => run(signInGoogle)} className="btn-quiet mt-8 w-full py-3">
+            {/* Back: the answer is the sign-in form */}
+            <section inert={!showBack} aria-hidden={!showBack} className="flip-back rounded-3xl border border-line bg-panel p-7 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.7)] sm:p-10">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-xs font-bold uppercase tracking-[0.25em] text-ink-soft">Answer</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("signIn");
+                    setError(null);
+                    setNotice(null);
+                    turn(false);
+                  }}
+                  className="text-sm font-semibold text-indigo hover:underline"
+                >
+                  Turn back
+                </button>
+              </div>
+              <h1 ref={backHeading} tabIndex={-1} className="mt-4 font-serif text-3xl font-bold tracking-tight outline-none">
+                {mode === "signIn" ? "Welcome back" : "Create your account"}
+              </h1>
+              <p className="mt-2 text-ink-soft">{mode === "signIn" ? "Sign in to keep studying." : "It's free, and takes a minute."}</p>
+          <button type="button" disabled={busy} onClick={() => run(signInGoogle)} className="btn-quiet mt-6 w-full py-3">
             <Icon name="google" />
             Continue with Google
           </button>
@@ -174,81 +224,13 @@ export default function LoginScreen() {
               {mode === "signIn" ? "Create an account" : "Sign in"}
             </button>
           </p>
-          {!fromDemoLink && <div className="mt-6">{demoBox}</div>}
-          <p className="mt-6 text-sm text-ink-soft">Only you can see your cards, unless you share a deck with a link. They&apos;re stored in your own private space in Google&apos;s Firebase database.</p>
+            </section>
+          </div>
         </div>
+
+        {!fromDemoLink && <div className="mt-10">{demoBox}</div>}
+        <p className="mt-6 text-center text-sm text-ink-soft">Only you can see your cards, unless you share a deck with a link. They&apos;re stored in your own private space in Google&apos;s Firebase database.</p>
       </main>
-    </div>
-  );
-}
-
-/*
-  Three made-up index cards on the desk, as a preview on the sign-in screen (none of them touch).
-  Each shows something Rememba does:
-    back:   a question card (Afrikaans: "How are you?")
-    middle: the answer, with the four grade buttons and how long until you'd see it again
-    below:  your streak and the last week of studying
-  Decorative only: screen readers skip it.
-*/
-const card = "rounded-2xl bg-[#fffdf7] p-5 text-[#1b1e33] shadow-[0_24px_50px_-18px_rgba(0,0,0,0.6)]";
-const ruled = {
-  backgroundImage:
-    "linear-gradient(#e05a5a,#e05a5a), repeating-linear-gradient(to bottom, transparent 0, transparent 27px, #cfe0f3 27px, #cfe0f3 28px)",
-  backgroundSize: "100% 2px, 100% 100%",
-  backgroundPosition: "0 2.9rem, 0 3rem",
-  backgroundRepeat: "no-repeat",
-};
-
-function DemoList() {
-  return (
-    // Laid out at 520 × 440 so no card touches another, then shrunk to fit smaller laptop screens
-    <div aria-hidden="true" className="relative mx-auto mt-8 h-[352px] w-[416px] select-none xl:h-[440px] xl:w-[520px]">
-      <div className="absolute left-0 top-0 h-[440px] w-[520px] origin-top-left scale-[0.8] xl:scale-100">
-      {/* The question */}
-      <div className={`${card} absolute left-0 top-2 w-[240px] rotate-[-6deg]`} style={ruled}>
-        <p className="flex items-center justify-between text-[11px] font-bold uppercase tracking-widest text-[#565b78]">
-          <span>Afrikaans</span>
-          <span>3 of 12</span>
-        </p>
-        <p className="mt-10 text-center font-serif text-2xl font-bold">How are you?</p>
-        <p className="mt-10 rounded-lg bg-[#3b4cca] py-2 text-center text-sm font-bold text-white">Show answer</p>
-      </div>
-
-      {/* The answer and the grade buttons, to the right of the question */}
-      <div className={`${card} absolute right-0 top-[40px] w-[260px] rotate-[4deg]`} style={ruled}>
-        <p className="text-[11px] font-bold uppercase tracking-widest text-[#565b78]">Answer</p>
-        <p className="mt-9 text-center font-serif text-2xl font-bold">Hoe gaan dit?</p>
-        <div className="mt-8 grid grid-cols-4 gap-1.5 text-center text-xs font-bold text-white">
-          {(
-            [
-              ["Again", "10m", "#c0392b"],
-              ["Hard", "2d", "#a86412"],
-              ["Good", "3d", "#23794a"],
-              ["Easy", "6d", "#3b4cca"],
-            ] as const
-          ).map(([label, gap, colour]) => (
-            <span key={label} className="rounded-lg py-1.5" style={{ background: colour }}>
-              {label}
-              <span className="block text-[10px] font-semibold">{gap}</span>
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* The streak, below the question card without touching it */}
-      <div className={`${card} absolute left-[4%] top-[262px] w-[230px] rotate-[-2deg]`}>
-        <p className="flex items-center gap-2 whitespace-nowrap font-serif text-xl font-bold text-[#a8540d]">
-          <Icon name="flame" className="h-6 w-6" />
-          12-day streak
-        </p>
-        <div className="mt-4 flex h-16 items-end gap-1.5">
-          {[30, 45, 25, 60, 50, 70, 55].map((h, i) => (
-            <span key={i} className="flex-1 rounded-t bg-[#3b4cca]" style={{ height: `${h}%`, opacity: i === 6 ? 1 : 0.55 }} />
-          ))}
-        </div>
-        <p className="mt-2 text-xs font-semibold text-[#565b78]">34 cards today · 91% right</p>
-      </div>
-      </div>
     </div>
   );
 }

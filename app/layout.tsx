@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
+import { Fraunces, Space_Grotesk } from "next/font/google";
 import AppShell from "@/components/AppShell";
 import RegisterServiceWorker from "@/components/RegisterServiceWorker";
 import "./globals.css";
 
 const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", display: "swap" });
-const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakarta", display: "swap" });
+const space = Space_Grotesk({ subsets: ["latin"], variable: "--font-space", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Rememba — flashcards that remember for you",
@@ -16,17 +16,17 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#eef0f7" },
-    { media: "(prefers-color-scheme: dark)", color: "#12142a" },
+    { media: "(prefers-color-scheme: light)", color: "#0d0f24" },
+    { media: "(prefers-color-scheme: dark)", color: "#0d0f24" },
   ],
 };
 
-// Applies the saved (or the device's) light/dark theme before the page is drawn, so there's no flash
-const themeScript = `try{var t=localStorage.getItem("rememba:theme");if(t!=="light"&&t!=="dark")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.dataset.theme=t;if(localStorage.getItem("rememba:signedIn"))document.documentElement.dataset.signedIn="1"}catch(e){}`;
+// Applies the saved theme (night mode unless you chose day mode) before the page is drawn, so there's no flash
+const themeScript = `try{var t=localStorage.getItem("rememba:theme");if(t!=="light"&&t!=="dark")t="dark";document.documentElement.dataset.theme=t;if(localStorage.getItem("rememba:signedIn"))document.documentElement.dataset.signedIn="1"}catch(e){}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-ZA" className={`${fraunces.variable} ${jakarta.variable}`} suppressHydrationWarning>
+    <html lang="en-ZA" className={`${fraunces.variable} ${space.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

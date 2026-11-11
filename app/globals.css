@@ -1,26 +1,29 @@
 @import "tailwindcss";
 
 /*
-  Rememba's look: index cards on a study desk.
-  A cool paper-blue desk, white cards with a red top line and pale blue rules, like the
-  index cards people study from, and ink-blue buttons. The four answer buttons always
-  have the same colours: Again red, Hard amber, Good green, Easy blue.
-  The cards stay white at night too (they're cards), on a deep ink-blue desk.
+  Rememba's look: studying late at night.
+  A deep indigo night sky with lime highlights, like a highlighter pen under a desk lamp.
+  It starts in dark mode (you can switch to day mode). The flashcards themselves are always
+  white index cards with a red top line and blue rules, the way people study from them.
+  The four answer buttons always have the same colours: Again red, Hard amber, Good green,
+  Easy blue. The layout stays out of the way: a slim bar at the top, and the pages in a small
+  dock at the bottom.
 */
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme {
-  --color-page: #eef0f7; /* the desk */
+  /* Day mode */
+  --color-page: #f1f2f8; /* the desk */
   --color-panel: #ffffff; /* panels and forms */
-  --color-ink: #1b1e33;
-  --color-ink-soft: #565b78; /* quieter text (passes AA on page and panel) */
-  --color-line: #d9dcea;
-  --color-indigo: #3b4cca; /* buttons, links, focus */
+  --color-ink: #161833;
+  --color-ink-soft: #545874; /* quieter text (passes AA on page and panel) */
+  --color-line: #d8dae8;
+  --color-indigo: #3e6a0c; /* the highlighter (dark lime by day): buttons, links, focus */
   --color-on-indigo: #ffffff;
-  --color-indigo-soft: #e3e6fa;
-  --color-coral: #c84a24; /* the red line on an index card, and the streak */
-  --color-flame: #e8781d;
+  --color-indigo-soft: #e6f2d4;
+  --color-coral: #c84a24; /* the streak */
+  --color-flame: #a3470a;
 
   /* The flashcard itself: always paper */
   --color-paper: #fffdf7;
@@ -35,21 +38,22 @@
   --color-good: #23794a;
   --color-easy: #3b4cca;
 
-  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-sans: var(--font-space, ui-sans-serif), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-fraunces, Georgia), ui-serif, Georgia, serif;
 }
 
 :root[data-theme="dark"] {
-  --color-page: #12142a;
-  --color-panel: #1c1f3a;
-  --color-ink: #e8eaf6;
-  --color-ink-soft: #a4a9c8;
-  --color-line: #2d3156;
-  --color-indigo: #8f9cff;
-  --color-on-indigo: #12142a;
-  --color-indigo-soft: #262b55;
+  /* Night mode (the default) */
+  --color-page: #0d0f24;
+  --color-panel: #171a38;
+  --color-ink: #eceefa;
+  --color-ink-soft: #a9adcf;
+  --color-line: #2a2e57;
+  --color-indigo: #c4f26a; /* lime highlighter */
+  --color-on-indigo: #11131f;
+  --color-indigo-soft: #26331a;
   --color-coral: #ff8a65;
-  --color-flame: #ffa94d;
+  --color-flame: #ffb15c;
   --color-again: #ff7a6b;
   --color-hard: #f2b154;
   --color-good: #5fd08f;
@@ -203,4 +207,52 @@ body {
 html[data-signed-in] .gate-login,
 html:not([data-signed-in]) .gate-splash {
   display: none;
+}
+
+/* Night sky behind the sign-in card: a few soft stars */
+.night {
+  background-color: var(--color-page);
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, color-mix(in srgb, var(--color-ink) 55%, transparent) 50%, transparent 51%),
+    radial-gradient(1px 1px at 78% 12%, color-mix(in srgb, var(--color-ink) 45%, transparent) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 64% 72%, color-mix(in srgb, var(--color-ink) 40%, transparent) 50%, transparent 51%),
+    radial-gradient(1px 1px at 30% 84%, color-mix(in srgb, var(--color-ink) 45%, transparent) 50%, transparent 51%),
+    radial-gradient(1px 1px at 90% 48%, color-mix(in srgb, var(--color-ink) 40%, transparent) 50%, transparent 51%),
+    radial-gradient(60% 50% at 50% 0%, color-mix(in srgb, var(--color-indigo) 14%, transparent), transparent 70%);
+}
+
+/* The sign-in flashcard: two faces in the same spot, and the card turns over */
+.flip {
+  perspective: 1600px;
+}
+.flip-inner {
+  display: grid;
+  transform-style: preserve-3d;
+  transition: transform 650ms cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+.flip-inner > * {
+  grid-area: 1 / 1;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.flip-inner > .flip-back {
+  transform: rotateY(180deg);
+}
+.flip-inner.flipped {
+  transform: rotateY(180deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .flip-inner {
+    transition: none;
+  }
+}
+
+/* An index card: a red line near the top and pale blue rules */
+.index-card {
+  background-color: var(--color-paper);
+  color: var(--color-paper-ink);
+  background-image: linear-gradient(var(--color-paper-red), var(--color-paper-red)), repeating-linear-gradient(to bottom, transparent 0 31px, var(--color-paper-rule) 31px 32px);
+  background-size: 100% 2px, 100% 100%;
+  background-position: 0 4.5rem, 0 4.6rem;
+  background-repeat: no-repeat;
 }

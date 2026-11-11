@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import Icon, { type IconName } from "@/components/Icon";
 import Logo from "@/components/Logo";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -20,38 +19,28 @@ export function isActive(path: string, href: string) {
   return href === "/" ? path === "/" || path.startsWith("/decks") : path.startsWith(href);
 }
 
-/* The bar at the top: logo, the pages (on bigger screens), your streak, sync and the theme */
+/*
+  A slim bar at the top that stays out of the way: the logo, your streak, whether your answers
+  are saved, and the theme. The pages are in the dock at the bottom (components/PhoneNav.tsx).
+*/
 export default function Header() {
   const { profile, online, pending } = useApp();
-  const path = usePathname();
   const now = Date.now();
   const days = streak(profile.days, now);
   const today = studiedToday(profile.days, now);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-page/90 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-5xl items-center gap-2 px-4 sm:px-6">
-        <Link href="/" className="mr-2 flex items-center gap-2 font-serif text-xl font-bold" aria-label="Rememba: your decks">
-          <Logo />
+    <header className="sticky top-0 z-30 bg-page/80 backdrop-blur">
+      <div className="mx-auto flex h-12 max-w-3xl items-center gap-2 px-4 sm:px-6">
+        <Link href="/" className="flex items-center gap-2 font-serif text-lg font-bold" aria-label="Rememba: your decks">
+          <Logo className="h-7 w-7" />
           Rememba
         </Link>
-        <nav aria-label="Main" className="hidden gap-1 sm:flex">
-          {NAV.map((n) => (
-            <Link
-              key={n.href}
-              href={n.href}
-              aria-current={isActive(path, n.href) ? "page" : undefined}
-              className={`rounded-full px-3 py-1.5 text-sm font-semibold ${isActive(path, n.href) ? "bg-indigo-soft text-indigo" : "text-ink-soft hover:text-ink"}`}
-            >
-              {n.label}
-            </Link>
-          ))}
-        </nav>
         <div className="ml-auto flex items-center gap-1">
           <Link
             href="/progress"
             title={days ? `${days}-day streak${today ? "" : ". Study today to keep it going!"}` : "Study today to start a streak"}
-            className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-bold ${days ? (today ? "text-flame" : "text-ink-soft") : "text-ink-soft"}`}
+            className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-bold ${days && today ? "text-flame" : "text-ink-soft"}`}
           >
             <Icon name="flame" className="h-5 w-5" />
             {days}

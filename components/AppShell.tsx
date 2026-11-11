@@ -68,7 +68,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </a>
       {demo && <DemoBanner />}
       <Header />
-      <main id="main" className="mx-auto max-w-5xl px-4 pb-28 pt-6 sm:px-6 sm:pb-16">
+      <main id="main" className="mx-auto max-w-3xl px-4 pb-32 pt-6 sm:px-6">
         {!app.online && (
           <p className="mb-4 flex items-start gap-2 rounded-xl border border-line bg-panel px-4 py-3 text-sm">
             <Icon name="cloudOff" className="mt-0.5 h-4 w-4 shrink-0 text-coral" />

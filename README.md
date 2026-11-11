@@ -65,14 +65,25 @@ Rememba is free for students. If it grows, this is how it could pay for itself:
 | **Teams** | Businesses | Training decks for staff, with a dashboard showing who has studied what and how well they know it |
 
 ## Design
-Index cards on a study desk: a cool paper-blue desk, white cards with a red top line and pale blue rules,
-and ink-blue buttons. The card turns over to show the answer. The four grade buttons always have the same
-colours (Again red, Hard amber, Good green, Easy blue), so you learn where they are. The cards stay white at
-night, on a deep ink-blue desk. Animations switch off for people who've asked their device to reduce motion.
+Studying late at night: a **deep indigo night sky with lime highlights**, like a highlighter pen under a desk lamp.
+Rememba **starts in night mode** (there's a switch for day mode, where the lime becomes a darker green so it's easy to
+read). The flashcards themselves are always white index cards with a red top line and pale blue rules, and the card
+turns over to show the answer. The four grade buttons always have the same colours (Again red, Hard amber, Good
+green, Easy blue), so you learn where they are. Animations switch off for people who've asked their device to reduce
+motion.
 
-The sign-in screen shows three made-up cards (a question, its answer with the grade buttons, and a streak)
-so visitors see what Rememba does before signing up. Fonts: [Fraunces](https://fonts.google.com/specimen/Fraunces)
-for headings and cards, [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) for everything else.
+**The sign-in screen is one big index card under a night sky** (`components/LoginScreen.tsx`). The front asks
+"What's the best way to remember what you study?" and answers it, the way Rememba works. **Turning it over shows the
+sign-in form.** Keyboard focus moves to the side that's showing, the hidden side can't be reached (`inert`), and it
+turns over by itself when there's something to see on the back, like an error. With reduced motion, it switches
+without turning.
+
+**Inside, the layout stays out of the way:** a slim bar at the top with your streak, and the pages in a small
+floating **dock** at the bottom, on phones and laptops. The dock hides while you study or take a quiz, so there's
+nothing on the screen but the card.
+
+Fonts: [Fraunces](https://fonts.google.com/specimen/Fraunces) for headings and cards,
+[Space Grotesk](https://fonts.google.com/specimen/Space+Grotesk) for everything else.
 
 ## Tech stack
 Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, Firebase Authentication, Cloud Firestore,
